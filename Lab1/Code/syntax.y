@@ -63,7 +63,7 @@
 
 %%
 //High-level Definitions
-Program : ExtDefList    {$$=createNode("Pragram", NULL, @$.first_line);addNode($$, 1, $1);root=$$;}
+Program : ExtDefList    {$$=createNode("Program", NULL, @$.first_line);addNode($$, 1, $1);root=$$;}
     ;
 ExtDefList : ExtDef ExtDefList    {$$=createNode("ExtDefList", NULL, @$.first_line);addNode($$, 2, $1, $2);}
     |    {$$=NULL;}
