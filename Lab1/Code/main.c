@@ -17,8 +17,10 @@ int main(int argc, char** argv)
         return 1;
     }
     yyrestart(f);
-    yyparse();
-    if (error_num==0){
+    int t=yyparse();
+    //printf("%d/n", t);
+    //printf("%d/n", error_num);
+    if (error_num==0 && t==0){
         printTree(root, 0);
     }
     return 0;

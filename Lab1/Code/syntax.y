@@ -8,9 +8,7 @@
     extern int error_num;
 
     void yyerror(char const *msg){
-        if (msg != "syntax error"){
-            printf("Error type B at Line %d: %s\n", yylineno, msg);
-        }
+        printf("Error type B at Line %d: %s\n", yylineno, msg);
 }
 %}
 
@@ -72,7 +70,7 @@ ExtDef : Specifier ExtDecList SEMI    {$$=createNode("ExtDef", NULL, @$.first_li
     | Specifier SEMI    {$$=createNode("ExtDef", NULL, @$.first_line);addNode($$, 2, $1, $2);}
     | Specifier FunDec CompSt    {$$=createNode("ExtDef", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     //| error SEMI    {error_num++;yyerror("Syntax error in high-level definitions");}
-    | Specifier error    {error_num++;yyerror("Syntax error in high-level definitions");}
+    //| Specifier error    {error_num++;yyerror("Syntax error in high-level definitions");}
     ;
 ExtDecList : VarDec    {$$=createNode("ExtDecList", NULL, @$.first_line);addNode($$, 1, $1);}
     | VarDec COMMA ExtDecList    {$$=createNode("ExtDecList", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
@@ -95,12 +93,12 @@ Tag : ID    {$$=createNode("Tag", NULL, @$.first_line);addNode($$, 1, $1);}
 VarDec : ID    {$$=createNode("VarDec", NULL, @$.first_line);addNode($$, 1, $1);}
     | VarDec LB INT RB    {$$=createNode("VarDec", NULL, @$.first_line);addNode($$, 4, $1, $2, $3, $4);}
     //| error RB    {error_num++;yyerror("Syntax error in declarators");}
-    | VarDec LB error RB    {error_num++;yyerror("Syntax error in statements");}
+    //| VarDec LB error RB    {error_num++;yyerror("Syntax error in statements");}
     ;
 FunDec : ID LP VarList RP    {$$=createNode("FunDec", NULL, @$.first_line);addNode($$, 4, $1, $2, $3, $4);}
     | ID LP RP    {$$=createNode("FunDec", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     //| error RP    {error_num++;yyerror("Syntax error in declarators");}
-    | ID LP error RP    {error_num++;yyerror("Syntax error in declarators");}
+    | ID LP error RP    {error_num++;}
     ;
 VarList : ParamDec COMMA VarList    {$$=createNode("VarList", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     | ParamDec    {$$=createNode("VarList", NULL, @$.first_line);addNode($$, 1, $1);}
@@ -118,12 +116,12 @@ StmtList : Stmt StmtList    {$$=createNode("StmtList", NULL, @$.first_line);addN
 Stmt : Exp SEMI    {$$=createNode("Stmt", NULL, @$.first_line);addNode($$, 2, $1, $2);}
     | CompSt        {$$=createNode("Stmt", NULL, @$.first_line);addNode($$, 1, $1);}
     | RETURN Exp SEMI    {$$=createNode("Stmt", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
-    | RETURN error SEMI    {error_num++;yyerror("Syntax error in statements");}
+    //| RETURN error SEMI    {error_num++;yyerror("Syntax error in statements");}
     | IF LP Exp RP Stmt %prec LOWER_THAN_ELSE    {$$=createNode("Stmt", NULL, @$.first_line);addNode($$, 5, $1, $2, $3, $4, $5);}
     | IF LP Exp RP Stmt ELSE Stmt    {$$=createNode("Stmt", NULL, @$.first_line);addNode($$, 7, $1, $2, $3, $4, $5, $6, $7);}
-    | IF LP Exp RP error ELSE Stmt    {error_num++;yyerror("Syntax error in statements");}
+    //| IF LP Exp RP error ELSE Stmt    {error_num++;yyerror("Syntax error in statements");}
     | WHILE LP Exp RP Stmt    {$$=createNode("Stmt", NULL, @$.first_line);addNode($$, 5, $1, $2, $3, $4, $5);}
-    | error SEMI    {error_num++;yyerror("Syntax error in statements");}
+    | error SEMI    {error_num++;}
     ;
 
 //Local Definitions
@@ -131,16 +129,16 @@ DefList : Def DefList    {$$=createNode("DefList", NULL, @$.first_line);addNode(
     |    {$$=NULL;}
     ;
 Def : Specifier DecList SEMI    {$$=createNode("Def", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
-    | Specifier error SEMI    {error_num++;yyerror("Syntax error in local definitions");}
+    | Specifier error SEMI    {error_num++;}
     ;
 DecList : Dec    {$$=createNode("DecList", NULL, @$.first_line);addNode($$, 1, $1);}
     | Dec COMMA DecList    {$$=createNode("DecList", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
-    | Dec error DecList    {error_num++;yyerror("Syntax error in local definitions");}
-    | Dec error    {error_num++;yyerror("Syntax error in local definitions");} 
+    //| Dec error DecList    {error_num++;yyerror("Syntax error in local definitions");}
+    //| Dec error    {error_num++;yyerror("Syntax error in local definitions");} 
     ;
 Dec : VarDec    {$$=createNode("Dec", NULL, @$.first_line);addNode($$, 1, $1);}
     | VarDec ASSIGNOP Exp    {$$=createNode("Dec", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
-    | VarDec ASSIGNOP error    {error_num++;yyerror("Syntax error in local definitions");}
+    //| VarDec ASSIGNOP error    {error_num++;yyerror("Syntax error in local definitions");}
     ;
 
 //Expressions
@@ -158,12 +156,12 @@ Exp : Exp ASSIGNOP Exp    {$$=createNode("Exp", NULL, @$.first_line);addNode($$,
     | ID LP Args RP    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 4, $1, $2, $3, $4);}
     | ID LP RP    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     | Exp LB Exp RB    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 4, $1, $2, $3, $4);}
-    | Exp LB error RB    {error_num++;yyerror("Syntax error in expressions");}
+    //| Exp LB error RB    {error_num++;yyerror("Syntax error in expressions");}
     | Exp DOT ID    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     | ID    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 1, $1);}
     | INT    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 1, $1);}
     | FLOAT    {$$=createNode("Exp", NULL, @$.first_line);addNode($$, 1, $1);}
-    //| error RP    {error_num++;yyerror("Syntax error in expressions");}
+    | error    {error_num++;}
     ;
 Args : Exp COMMA Args    {$$=createNode("Args", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     | Exp    {$$=createNode("Args", NULL, @$.first_line);addNode($$, 1, $1);}
