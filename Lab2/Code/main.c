@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include "syntax.tab.h"
 #include "tree.h"
+#include "semantic.h"
 
 int error_num=0;
 TreeNode* root;
