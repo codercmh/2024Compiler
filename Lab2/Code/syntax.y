@@ -71,6 +71,7 @@ ExtDef : Specifier ExtDecList SEMI    {$$=createNode("ExtDef", NULL, @$.first_li
     | Specifier FunDec CompSt    {$$=createNode("ExtDef", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
     //| error SEMI    {error_num++;yyerror("Syntax error in high-level definitions");}
     //| Specifier error    {error_num++;yyerror("Syntax error in high-level definitions");}
+    | error    {error_num++;}
     ;
 ExtDecList : VarDec    {$$=createNode("ExtDecList", NULL, @$.first_line);addNode($$, 1, $1);}
     | VarDec COMMA ExtDecList    {$$=createNode("ExtDecList", NULL, @$.first_line);addNode($$, 3, $1, $2, $3);}
@@ -109,6 +110,7 @@ ParamDec : Specifier VarDec    {$$=createNode("VarList", NULL, @$.first_line);ad
 //Statements
 CompSt : LC DefList StmtList RC    {$$=createNode("CompSt", NULL, @$.first_line);addNode($$, 4, $1, $2, $3, $4);}
     //| LC error RC    {error_num++;yyerror("Syntax error in statements");}
+    //| error    {error_num++;}
     ;
 StmtList : Stmt StmtList    {$$=createNode("StmtList", NULL, @$.first_line);addNode($$, 2, $1, $2);}
     |    {$$=NULL;}

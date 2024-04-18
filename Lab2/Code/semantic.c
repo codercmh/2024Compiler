@@ -22,6 +22,7 @@ unsigned int hash_pjw(char* name){
 
 //函数可以与变量重名
 void insert(SymbolTableEntry* entry) {
+    if(entry->name==NULL) return;
     unsigned int index = hash_pjw(entry->name) % HASH_SIZE;
     entry->next = hashTable[index];
     hashTable[index] = entry;
@@ -30,6 +31,7 @@ void insert(SymbolTableEntry* entry) {
 //function:type=1   others:type=2
 //函数可以与变量重名
 SymbolTableEntry* find(char* name, int type) {
+    if(name==NULL) return NULL;
     unsigned int index = hash_pjw(name) % HASH_SIZE;
     SymbolTableEntry* entry = hashTable[index];
     while (entry != NULL) {
@@ -45,7 +47,8 @@ SymbolTableEntry* find(char* name, int type) {
 
 //match:return=1    mismatch:return=0
 int typeMatch(Type typea, Type typeb){
-    if(typea->kind!=typeb->kind||typea==NULL||typeb==NULL){
+    if(typea==NULL||typeb==NULL) return 0;
+    if(typea->kind!=typeb->kind){
         return 0;
     }
     if(typea->kind==BASIC){
@@ -80,9 +83,25 @@ int typeMatch(Type typea, Type typeb){
             return 1;
         }
     }else if(typea->kind==FUNC){
-        //暂时不需要函数等价判断
-        return 0;
+        //函数等价判断
+        if(typea->u.func.paramNum!=typeb->u.func.paramNum){
+            return 0;
+        }
+        if(typeMatch(typea->u.func.returnType, typeb->u.func.returnType)){
+            return 0;
+        }
+        FieldList paramsa=typea->u.func.params;
+        FieldList paramsb=typeb->u.func.params;
+        for(int i=0;i<typea->u.func.paramNum;i++){
+            if(typeMatch(paramsa->type, paramsb->type)==0){
+                return 0;
+            }
+            paramsa=paramsa->tail;
+            paramsb=paramsb->tail;
+        }
+        return 1;
     }
+    return 0;
 }
 
 
@@ -127,6 +146,7 @@ void ExtDefList(TreeNode* node){
 // | Specifier SEMI
 // | Specifier FunDec CompSt
 void ExtDef(TreeNode* node){
+    if(node->childrenCount==0) return;
     Type type=Specifier(node->children[0]);
     if(!strcmp(node->children[1]->name, "ExtDecList")){
         ExtDecList(node->children[1], type);
@@ -260,10 +280,12 @@ SymbolTableEntry* VarDec(TreeNode* node, Type type){
     //维数
     int num=0;
     TreeNode* temp=node;
+    //printf("debug\n");
     while(strcmp(temp->children[0]->name, "ID")){
         num++;
         temp=temp->children[0];
     }
+    //printf("hhh%d\n",num);
 
     if(!strcmp(node->children[0]->name, "ID")){
         //num=0
@@ -274,7 +296,7 @@ SymbolTableEntry* VarDec(TreeNode* node, Type type){
     }else{
         //num>0
         SymbolTableEntry* entry=(SymbolTableEntry*)malloc(sizeof(struct SymbolTableEntry));
-        entry->name=node->children[0]->value;
+        entry->name=temp->children[0]->value;
         Type lastType=type;
         temp=node;
         for(int i=0;i<num;i++){
@@ -337,18 +359,20 @@ void FunDec(TreeNode* node, Type type){
         type0->u.func.returnType=type;
         entry->type=type0;
     }
-
+    //printf("debug1\n");
     if(find(entry->name, 1)!=NULL){
-        printf("Error type 4 at Line %d: Redefined function %s.\n", node->lineNo, node->name);
+        printf("Error type 4 at Line %d: Redefined function %s.\n", node->lineNo, node->children[0]->value);
     }else{
         insert(entry);
     }
+    //printf("debug2\n");
 }
 
 //CompSt → LC DefList StmtList RC
 //StmtList → Stmt StmtList
 // | 
 void CompSt(TreeNode* node, Type type){
+    if(node==NULL) return;
     DefList(node->children[1]);
     TreeNode* stmtList=node->children[2];
     while(stmtList!=NULL){
@@ -369,12 +393,13 @@ void Stmt(TreeNode* node, Type type){
     }else if(!strcmp(node->children[0]->name, "CompSt")){
         CompSt(node->children[0], type);
     }else if(!strcmp(node->children[0]->name, "RETURN")){
-        Type type_return=Exp(node->children[0]);
+        Type type_return=Exp(node->children[1]);
+        //printf("debug1\n");
         if(typeMatch(type,type_return)==0){
             printf("Error type 8 at Line %d: Type mismatched for return.\n", node->lineNo);
         }
     }else if(!strcmp(node->children[0]->name, "IF")){
-        if(node->children[0]->childrenCount==5){
+        if(node->childrenCount==5){
             Exp(node->children[2]);
             Stmt(node->children[4], type);
         }else{
@@ -417,12 +442,13 @@ void DecList(TreeNode* node, Type type){
 //Dec → VarDec
 // | VarDec ASSIGNOP Exp
 void Dec(TreeNode* node, Type type){
+    //printf("debug\n");
     if(node==NULL) return;
     SymbolTableEntry* entry=VarDec(node->children[0], type);
     if(node->childrenCount==3){
         Type type_right=Exp(node->children[2]);
         if(typeMatch(entry->type, type_right)==0){
-            printf("Error type 5 at Line %d: mismatch in assignment.\n",node->lineNo);
+            printf("Error type 5 at Line %d: Type mismatched for assignment.\n",node->lineNo);
         }
     }
     if(find(entry->name, 2)!=NULL){
@@ -453,6 +479,7 @@ void Dec(TreeNode* node, Type type){
 //Args → Exp COMMA Args
 // | Exp
 Type Exp(TreeNode* node){
+    //printf("debug\n");
     if(node==NULL) return NULL;
     if(node->childrenCount>1){
         if(!strcmp(node->children[1]->name, "ASSIGNOP")){
@@ -470,10 +497,12 @@ Type Exp(TreeNode* node){
             }
             Type t_left=Exp(exp_left);
             Type t_right=Exp(exp_right);
+            //printf("debug1\n");
             if(typeMatch(t_left, t_right)==0){
+                //printf("debug\n");
                 //这里会造成重复报错?done
                 if(t_left!=NULL&&t_right!=NULL){
-                    printf("Error type 5 at Line %d: mismatch in assignment\n",node->lineNo);
+                    printf("Error type 5 at Line %d: Type mismatched for assignment\n",node->lineNo);
                 }
                 return NULL;
             }
@@ -484,10 +513,14 @@ Type Exp(TreeNode* node){
             TreeNode * exp_right = node->children[2];
             Type t_left = Exp(exp_left);
             Type t_right = Exp(exp_right);
+            if(t_left==NULL || t_right==NULL){
+                return NULL;
+            }
+            //printf("debug1\n");
             if(t_left->kind==BASIC&&t_left->u.basic==TYPE_INT&&t_right->kind==BASIC&&t_right->u.basic==TYPE_INT){
                 return t_left;
             }else{
-                printf("Error type 7 at Line %d: mismatch in operands\n",node->lineNo);
+                printf("Error type 7 at Line %d: Type mismatched for operands\n",node->lineNo);
                 return NULL;
             }
         }else if(!strcmp(node->children[1]->name, "PLUS") || !strcmp(node->children[1]->name, "MINUS") || !strcmp(node->children[1]->name, "STAR") || !strcmp(node->children[1]->name, "DIV")){
@@ -499,7 +532,7 @@ Type Exp(TreeNode* node){
             if(t_left->kind==BASIC && t_right->kind==BASIC && typeMatch(t_left, t_right)==1){
                 return t_left;
             }else{
-                printf("Error type 7 at Line %d: mismatch in operands.\n", node->lineNo);
+                printf("Error type 7 at Line %d: Type mismatched for operands.\n", node->lineNo);
                 return NULL;
             }
         }else if(!strcmp(node->children[0]->name, "LP") || !strcmp(node->children[0]->name, "MINUS")){
@@ -508,7 +541,7 @@ Type Exp(TreeNode* node){
             if(t0->kind==BASIC){
                 return t0;
             }else{
-                printf("Error type 7 at Line %d: mismatch in operands.\n", node->lineNo);
+                printf("Error type 7 at Line %d: Type mismatched for operands.\n", node->lineNo);
                 return NULL;   
             }
         }else if(!strcmp(node->children[0]->name, "NOT")){
@@ -517,7 +550,7 @@ Type Exp(TreeNode* node){
             if(t0->kind==BASIC&&t0->u.basic==TYPE_INT){
                 return t0;
             }else{
-                printf("Error type 7 at Line %d: mismatch in operands\n",node->lineNo);
+                printf("Error type 7 at Line %d: Type mismatched for operands\n",node->lineNo);
                 return NULL;
             }
         }else if(!strcmp(node->children[0]->name, "ID")){
@@ -556,20 +589,24 @@ Type Exp(TreeNode* node){
                 }
             }
             type_use->u.func.returnType=type_func->u.func.returnType;
-            //此处判断参数数量是否为0？
+            //此处判断参数数量是否为0
             if(typeMatch(type_func, type_use)==0){
-                printf("Error type 9 at Line %d: Params wrong in function %s.\n", node->lineNo, node->children[0]->value);
-                return NULL;
+                if(!(type_use->u.func.paramNum==0&&type_func->u.func.paramNum==0)){
+                    printf("Error type 9 at Line %d: Params wrong in function %s.\n", node->lineNo, node->children[0]->value);
+                    return NULL;
+                }
+                return type_func->u.func.returnType;
             }else{
                 return type_func->u.func.returnType;
             }
         }else if(!strcmp(node->children[1]->name, "LB")){
+            //printf("debug\n");
             Type type0=Exp(node->children[0]);
             //undefined
             if(type0==NULL){
                 return NULL;
             }else if(type0->kind!=ARRAY){
-                printf("Error type 10 at Line %d: %s is not an array.\n", node->children[0]->lineNo, node->children[0]->value);
+                printf("Error type 10 at Line %d: %s is not an array.\n", node->children[0]->lineNo, node->children[0]->children[0]->value);
                 return NULL;
             }
             Type type1=Exp(node->children[2]);
@@ -586,7 +623,7 @@ Type Exp(TreeNode* node){
             if(type0==NULL){
                 return NULL;
             }else if(type0->kind!=STRUCTURE){
-                printf("Error type 13 at Line %d: %s is not a struct.\n", node->children[0]->lineNo, exp->value);
+                printf("Error type 13 at Line %d: %s is not a struct.\n", node->children[0]->lineNo, exp->children[0]->value);
                 return NULL;
             }
             FieldList field=type0->u.structure;
