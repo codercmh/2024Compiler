@@ -87,7 +87,7 @@ int typeMatch(Type typea, Type typeb){
         if(typea->u.func.paramNum!=typeb->u.func.paramNum){
             return 0;
         }
-        if(typeMatch(typea->u.func.returnType, typeb->u.func.returnType)){
+        if(typeMatch(typea->u.func.returnType, typeb->u.func.returnType)==0){
             return 0;
         }
         FieldList paramsa=typea->u.func.params;
@@ -115,6 +115,7 @@ FieldList createFieldFromEntry(SymbolTableEntry* entry) {
         return NULL;  // Handle allocation failure
     }
     field->name = my_strdup(entry->name); 
+    //printf("%s\n",field->name);
     field->type = entry->type;         
     field->tail = createFieldFromEntry(entry->next);                
     return field;
@@ -212,6 +213,9 @@ Type StructSpecifier(TreeNode* node){
         }else{
             type->u.structure=entry->type->u.structure;
         }
+        //printf("field name %s\n",type->u.structure->name);
+        //printf("head %p\n",type->u.structure);
+        //printf("next field %p\n",type->u.structure->tail);
         return type;
     }
 
@@ -251,6 +255,9 @@ Type StructSpecifier(TreeNode* node){
                     type->u.structure=field;
                 }
             }
+            //printf("field name %s\n",type->u.structure->name);
+            //printf("head %p\n",type->u.structure);
+            //printf("next field %p\n",type->u.structure->tail);
             if(decList->childrenCount==3){
                 decList=decList->children[2];
             }else{
@@ -262,6 +269,7 @@ Type StructSpecifier(TreeNode* node){
     SymbolTableEntry* entry_struct=(SymbolTableEntry*)malloc(sizeof(struct SymbolTableEntry));
     entry_struct->type=type;
     if(node->children[1]==NULL){
+        //匿名结构体类型的名字怎么取？
         entry_struct->name=NULL;
     }else{
         entry_struct->name=node->children[1]->children[0]->value;
@@ -343,6 +351,9 @@ void FunDec(TreeNode* node, Type type){
             type0->u.func.paramNum++;
             param->tail=type0->u.func.params;
             type0->u.func.params=param;
+            //printf("param name %s\n",type0->u.func.params->name);
+            //printf("head %p\n",type0->u.func.params);
+            //printf("next param %p\n",type0->u.func.params->tail);
             if(varList->childrenCount==3){
                 varList=varList->children[2];
             }else{
@@ -447,8 +458,11 @@ void Dec(TreeNode* node, Type type){
     SymbolTableEntry* entry=VarDec(node->children[0], type);
     if(node->childrenCount==3){
         Type type_right=Exp(node->children[2]);
+        //printf("debug\n");
         if(typeMatch(entry->type, type_right)==0){
-            printf("Error type 5 at Line %d: Type mismatched for assignment.\n",node->lineNo);
+            if(type_right!=NULL){
+                printf("Error type 5 at Line %d: Type mismatched for assignment.\n",node->lineNo);
+            }
         }
     }
     if(find(entry->name, 2)!=NULL){
@@ -581,6 +595,10 @@ Type Exp(TreeNode* node){
                     type_use->u.func.paramNum++;
                     params->tail=type_use->u.func.params;
                     type_use->u.func.params=params;
+                    //printf("real param type %d\n",type_use->u.func.params->type->kind);
+                    //printf("real param name %s\n",type_use->u.func.params->name);
+                    //printf("real head %p\n",type_use->u.func.params);
+                    //printf("real next param %p\n",type_use->u.func.params->tail);
                     if(args->childrenCount==3){
                         args=args->children[2];
                     }else{
@@ -589,8 +607,11 @@ Type Exp(TreeNode* node){
                 }
             }
             type_use->u.func.returnType=type_func->u.func.returnType;
+            //printf("real return type %p\n",type_use->u.func.returnType);
+            //printf("formal return type %p\n",type_func->u.func.returnType);
             //此处判断参数数量是否为0
             if(typeMatch(type_func, type_use)==0){
+                //printf("debug\n");
                 if(!(type_use->u.func.paramNum==0&&type_func->u.func.paramNum==0)){
                     printf("Error type 9 at Line %d: Params wrong in function %s.\n", node->lineNo, node->children[0]->value);
                     return NULL;
@@ -618,6 +639,7 @@ Type Exp(TreeNode* node){
             }
             return type0->u.array.elem;
         }else if(!strcmp(node->children[1]->name, "DOT")){
+            //printf("debug\n");
             TreeNode* exp=node->children[0];
             Type type0=Exp(exp);
             if(type0==NULL){
@@ -628,7 +650,11 @@ Type Exp(TreeNode* node){
             }
             FieldList field=type0->u.structure;
             while(field!=NULL){
-                if(!strcmp(node->children[2]->name, field->name)){
+                //printf("struct field name %s\n",field->name);
+                //printf("head %p\n",field);
+                //printf("field name %s\n",node->children[2]->value);
+                //printf("next field %p\n",type->u.structure->tail);
+                if(!strcmp(node->children[2]->value, field->name)){
                     return field->type;
                 }
                 field=field->tail;
