@@ -386,6 +386,7 @@ void CompSt(TreeNode* node, Type type){
     if(node==NULL) return;
     DefList(node->children[1]);
     TreeNode* stmtList=node->children[2];
+    //printf("debug");
     while(stmtList!=NULL){
         Stmt(stmtList->children[0], type);
         stmtList=stmtList->children[1];
@@ -403,6 +404,7 @@ void Stmt(TreeNode* node, Type type){
         Exp(node->children[0]);
     }else if(!strcmp(node->children[0]->name, "CompSt")){
         CompSt(node->children[0], type);
+        //printf("debug");
     }else if(!strcmp(node->children[0]->name, "RETURN")){
         Type type_return=Exp(node->children[1]);
         //printf("debug1\n");
@@ -421,6 +423,7 @@ void Stmt(TreeNode* node, Type type){
     }else if(!strcmp(node->children[0]->name, "WHILE")){
         Exp(node->children[2]);
         Stmt(node->children[4], type);
+        //printf("debug");
     }
 }
 
@@ -527,6 +530,7 @@ Type Exp(TreeNode* node){
             TreeNode * exp_right = node->children[2];
             Type t_left = Exp(exp_left);
             Type t_right = Exp(exp_right);
+            //printf("debug1\n");
             if(t_left==NULL || t_right==NULL){
                 return NULL;
             }
@@ -543,10 +547,14 @@ Type Exp(TreeNode* node){
             TreeNode * exp_right = node->children[2];
             Type t_left = Exp(exp_left);
             Type t_right = Exp(exp_right);
+            if(t_left==NULL || t_right==NULL){
+                return NULL;
+            }
             if(t_left->kind==BASIC && t_right->kind==BASIC && typeMatch(t_left, t_right)==1){
                 return t_left;
             }else{
                 printf("Error type 7 at Line %d: Type mismatched for operands.\n", node->lineNo);
+                //printf("debug\n");
                 return NULL;
             }
         }else if(!strcmp(node->children[0]->name, "LP") || !strcmp(node->children[0]->name, "MINUS")){

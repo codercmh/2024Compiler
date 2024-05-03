@@ -1,0 +1,18 @@
+struct Product {
+  int id;
+  float price;
+  int quantity;
+};
+
+struct Product inventory[5];
+int numProducts;
+
+float calculateInventoryValue(int numProducts1) {
+  float totalValue = 0.0;
+  int i = 0;
+  while (i < numProducts1) {
+    totalValue = totalValue + inventory[i].price * inventory[i].quantity;
+    i = i + 1;
+  }
+  return totalValue;
+}
