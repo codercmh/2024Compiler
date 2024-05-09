@@ -736,7 +736,7 @@ void translateVarDec(TreeNode* node, Operand place) {
                 place->u.name=my_strdup(entry->name);
             }
         } else if (type->kind == ARRAY) {
-            // 选做：可能出现高维数组情况
+            // 选做：可能出现数组情况
             Operand op = (Operand)malloc(sizeof(struct Operand_));
 	        op->kind = OP_VARIABLE;
             op->u.name=my_strdup(entry->name);
@@ -951,8 +951,8 @@ void translateExp(TreeNode* node, Operand place) {
                 translateCond(node, label1, label2);
                 genInterCode(IR_LABEL, label1);
                 genInterCode(IR_ASSIGN, place, true_num);
-                //这里缺一行？
-                //genInterCode(IR_LABEL, label2);
+                //这里缺一行？???????
+                genInterCode(IR_LABEL, label2);
 
             } else {
                 // Exp -> Exp ASSIGNOP Exp
@@ -995,6 +995,7 @@ void translateExp(TreeNode* node, Operand place) {
             if (!strcmp(node->children[1]->name, "LB")) {
                 //数组,可以是多维数组
                 //printf("debug\n");
+                //这里通过isArg来判断是否为形参，如果是形参走另外一套，按照地址来处理
                 TreeNode* tmp_exp=node;
                 int num=0;
                 while(tmp_exp->childrenCount!=1){
@@ -1142,9 +1143,11 @@ void translateExp(TreeNode* node, Operand place) {
                             // varTempCopy->isAddr = TRUE;
                             genInterCode(IR_ARG, varTempCopy);
                         }
-                    }
-                    // 一般参数直接传值
-                    else {
+                        // 一般参数直接传值
+                        else {
+                            genInterCode(IR_ARG, argTemp->op);
+                        }
+                    } else {
                         genInterCode(IR_ARG, argTemp->op);
                     }
                     argTemp = argTemp->next;

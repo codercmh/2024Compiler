@@ -1,15 +1,19 @@
-int add(int temp[2])
-{
-    return (temp[0] + temp[1]);
+int fact(int m) {
+    int result = 1;
+    int j = 1;
+    while (j <= m) {
+        result = result * j;
+        j = j + 1;
+    }
+	return result;
 }
-
-int main()
-{
-    int op[2];
-    int ret;
-    op[0]=1;
-    op[1]=2;
-    ret=add(op);
-    write(ret);
+int main() {
+    int x[5];
+    int i = 0, N = 5;
+    while (i < N) {
+        x[i] = i + 2;
+        write(fact(x[i]));
+        i = i + 1;
+    }
     return 0;
 }
