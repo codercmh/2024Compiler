@@ -1,0 +1,15 @@
+int add(int temp[2])
+{
+    return (temp[0] + temp[1]);
+}
+
+int main()
+{
+    int op[2];
+    int ret;
+    op[0]=1;
+    op[1]=2;
+    ret=add(op);
+    write(ret);
+    return 0;
+}

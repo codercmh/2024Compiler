@@ -1,0 +1,11 @@
+FUNCTION add :
+PARAM b
+PARAM a
+t1 := a + b
+RETURN t1
+FUNCTION main :
+ARG #1
+ARG #3
+t2 := CALL add
+ret := t2
+RETURN #0
