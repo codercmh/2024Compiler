@@ -1,9 +1,9 @@
 FUNCTION add :
 PARAM temp
-t2 := &temp
+t2 := temp
 t3 := #0 * #4
 t2 := t2 + t3
-t4 := &temp
+t4 := temp
 t5 := #1 * #4
 t4 := t4 + t5
 t6 := *t2

@@ -42,7 +42,7 @@ typedef struct SymbolTableEntry {
     char* name;
     Type type;
     struct SymbolTableEntry* next;
-    int isArg;   //是否为函数参数 lab3
+    int isArg;   //是否为函数形参 lab3
 } SymbolTableEntry;
 
 

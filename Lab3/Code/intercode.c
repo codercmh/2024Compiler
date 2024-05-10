@@ -995,7 +995,8 @@ void translateExp(TreeNode* node, Operand place) {
             if (!strcmp(node->children[1]->name, "LB")) {
                 //数组,可以是多维数组
                 //printf("debug\n");
-                //这里通过isArg来判断是否为形参，如果是形参走另外一套，按照地址来处理
+                //这里通过isArg来判断是否为形参，如果是形参按照地址来处理
+                
                 TreeNode* tmp_exp=node;
                 int num=0;
                 while(tmp_exp->childrenCount!=1){
@@ -1006,12 +1007,24 @@ void translateExp(TreeNode* node, Operand place) {
                 //printf("num: %d\n", num);
                 SymbolTableEntry* entry=find(id->value, 2);
                 Type entry_type=entry->type;
+                Type element=entry->type->u.array.elem;
+
+                //找出数组的总维数
+                int vector=1;
+                while(element->kind==ARRAY){
+                    vector++;
+                    element=element->u.array.elem;
+                }
                 //printf("debug\n");
 
                 Operand base = newTemp();
                 translateExp(tmp_exp, base);
                 //Operand target = newTemp();
-                genInterCode(IR_GET_ADDR, place, base);
+                if(entry->isArg==1){
+                    genInterCode(IR_ASSIGN, place, base);
+                }else{
+                    genInterCode(IR_GET_ADDR, place, base);
+                }
 
                 TreeNode* exp=node;
                 //Operand offset = newTemp();
@@ -1023,13 +1036,13 @@ void translateExp(TreeNode* node, Operand place) {
                     Operand idx = newTemp();
                     translateExp(exp->children[2], idx);
                     Operand width = (Operand)malloc(sizeof(struct Operand_));
-	                width->kind = OP_CONSTANT;
+                    width->kind = OP_CONSTANT;
                     for(int j=num-i;j>=0;j--){
                         temp_entry_type=temp_entry_type->u.array.elem;
                     }
                     //printf("debug1\n");
                     //printf("type: %d\n", temp_entry_type->kind);
-	                width->u.value = getSize(temp_entry_type);
+                    width->u.value = getSize(temp_entry_type);
                     //printf("width: %d\n", width->u.value);
                     //printf("debug2\n");
                     Operand temp = newTemp();
@@ -1040,7 +1053,16 @@ void translateExp(TreeNode* node, Operand place) {
                 }
 
                 //genInterCode(IR_ADD, place, target, );
-                place->kind = OP_ADDRESS;
+                //判断当前是否数组取到了最底层，如果未取到最底层，那么此处属于函数传参一维数组
+                //printf("vector: %d\n",vector);
+                //printf("i: %d\n",i);
+                if(vector==i){
+                    //printf("debug ===\n");
+                    place->kind = OP_ADDRESS;
+                }else{
+                    //printf("debug !=\n");
+                    place->kind = OP_VARIABLE;
+                }
                 //genInterCode = 
                 //printf("debug1\n");
 
@@ -1135,8 +1157,13 @@ void translateExp(TreeNode* node, Operand place) {
 
                         // 一维数组作为参数需要传址
                         if (item && item->type->kind == ARRAY) {
+                            //区分是否是迭代调用了一维数组参数，如果迭代了，已经是地址不需要再取地址
                             Operand varTemp = newTemp();
-                            genInterCode(IR_GET_ADDR, varTemp, argTemp->op);
+                            if(item->isArg==1){
+                                genInterCode(IR_ASSIGN, varTemp, argTemp->op);
+                            }else{
+                                genInterCode(IR_GET_ADDR, varTemp, argTemp->op);
+                            }
                             Operand varTempCopy = (Operand)malloc(sizeof(struct Operand_));
 	                        varTempCopy->kind = OP_VARIABLE;
                             varTempCopy->u.name=my_strdup(varTemp->u.name);
@@ -1178,7 +1205,7 @@ void translateExp(TreeNode* node, Operand place) {
     else if (!strcmp(node->children[0]->name, "ID")) {
         //SymbolTableEntry* item = find(node->children[0]->value, 2);
         // 根据讲义，数组做参数时传引用
-        IR->tempVarNum--;
+        //IR->tempVarNum--;
         //printf("isArg: %d\n", item->isArg);
         //if (item->isArg && item->type->kind == ARRAY) {
         //    printf("isArg: %d\n", item->isArg);
@@ -1204,7 +1231,7 @@ void translateExp(TreeNode* node, Operand place) {
         // }
 
         // Exp -> INT
-        IR->tempVarNum--;
+        //IR->tempVarNum--;
         place->kind = OP_CONSTANT;
         place->u.value=atoi(node->children[0]->value);
         // pOperand t1 = newOperand(OP_CONSTANT, node->child->val);
