@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 //操作数
 typedef struct Operand_* Operand;
 struct Operand_ {
@@ -97,6 +98,8 @@ struct argList_ {
     Arg head;
     Arg cur;
 };
+
+extern InterCodeList IR;
 
 //intercode
 void initIR();

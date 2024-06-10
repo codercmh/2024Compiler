@@ -3,6 +3,7 @@
 #include "tree.h"
 #include "semantic.h"
 #include "intercode.h"
+#include "assembly.h"
 
 int error_num=0;
 TreeNode* root;
@@ -28,9 +29,12 @@ int main(int argc, char** argv)
     //    printTree(root, 0);
     //}
 
+    //语义分析
     semantic_analysis(root);
 
+    //生成中间代码
     get_intercode(root);
+    /*
     if(argc == 2){
         printInterCode(NULL);
     }
@@ -42,6 +46,15 @@ int main(int argc, char** argv)
         }
         printInterCode(fw);
     }
+    */
+
+    FILE* fw = fopen(argv[2], "wt+");
+    if (!fw) {
+        perror(argv[2]);
+        return 1;
+    }
+    //生成汇编代码
+    get_assemblycode(fw);
 
     return 0;
 }
